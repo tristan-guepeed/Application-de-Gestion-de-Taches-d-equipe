@@ -1,0 +1,39 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Env virtual
+env/
+
+# Django
+*.log
+*.pot
+*.pyc
+
+# VSCode
+.vscode/
+
+# macOS
+.DS_Store
+
+# Docker
+*.env
+docker-compose.override.yml
+
+# Pytest / coverage
+htmlcov/
+.coverage
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# IDE / OS
+*.swp
+*.swo
+*.bak
+*.tmp
