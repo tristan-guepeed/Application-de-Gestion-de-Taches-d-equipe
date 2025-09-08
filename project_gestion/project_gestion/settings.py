@@ -84,7 +84,8 @@ DATABASES = {
         "NAME": "project_gestion_db",
         "USER": "project_user",
         "PASSWORD": "technique",
-        "HOST": "db",
+        #"HOST": "db",
+        "HOST": "localhost",
         "PORT": "5432",
     }
 }

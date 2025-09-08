@@ -1,4 +1,6 @@
 from django.db import models
+from django.conf import settings
+from projects.models import TimeStampedModel, Project
 
 class Task(TimeStampedModel):
     class Status(models.TextChoices):
