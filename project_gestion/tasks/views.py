@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions
 from .models import Task
 from .serializers import TaskSerializer
 from .permissions import IsCreatorOrProjectOwner
+from rest_framework.exceptions import PermissionDenied
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
@@ -30,5 +31,9 @@ class TaskViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        project = serializer.validated_data["project"]
+        user = self.request.user
+        if user != project.owner and not project.members.filter(id=user.id).exists():
+            raise PermissionDenied("You must be a project member to create a task.")
+        serializer.save(created_by=user)
 

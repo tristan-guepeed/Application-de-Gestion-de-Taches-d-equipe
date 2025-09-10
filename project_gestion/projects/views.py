@@ -14,8 +14,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_queryset(self):
-        user = self.request.user
-        return (Project.objects.filter(owner=user) | Project.objects.filter(members=user)).distinct()
+        return Project.objects.all()
 
     def perform_create(self, serializer):
         serializer.save()
