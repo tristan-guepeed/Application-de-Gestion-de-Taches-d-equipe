@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from .models import Project, ProjectMember
 from django.contrib.auth.models import User
@@ -29,7 +30,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         ProjectMember.objects.create(project=project, user=self.context["request"].user, role="owner")
 
         for member_data in members_data:
-            user = User.objects.get(id=member_data["id"])
+            user = get_object_or_404(User, id=member_data["id"])
             ProjectMember.objects.create(
                 project=project,
                 user=user,
@@ -37,6 +38,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             )
 
         return project
+    
 
     def update(self, instance, validated_data):
         members_data = validated_data.pop("members", None)

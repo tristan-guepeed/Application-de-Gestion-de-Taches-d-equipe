@@ -23,4 +23,3 @@ class Task(TimeStampedModel):
     assignees = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="assigned_tasks", blank=True)
     due_date = models.DateField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-    position = models.PositiveIntegerField(default=0)
