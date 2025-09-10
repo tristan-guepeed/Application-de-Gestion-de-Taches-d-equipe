@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'users',
     'projects',
     'tasks',
-    "django_extensions"
+    "django_extensions",
+    "drf_spectacular",
 
 ]
 
@@ -53,7 +54,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Kanbios API',
+    'DESCRIPTION': 'API pour la gestion de projets et tâches',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
