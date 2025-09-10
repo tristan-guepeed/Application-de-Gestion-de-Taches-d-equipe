@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'tasks',
     "django_extensions",
     "drf_spectacular",
+    "corsheaders",
 
 ]
 
@@ -57,6 +58,24 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+    "accept",
+    "origin",
+    "user-agent",
+    "dnt",
+    "cache-control",
+    "x-requested-with",
+]
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Kanbios API',
     'DESCRIPTION': 'API pour la gestion de projets et tâches',
@@ -66,6 +85,7 @@ SPECTACULAR_SETTINGS = {
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
