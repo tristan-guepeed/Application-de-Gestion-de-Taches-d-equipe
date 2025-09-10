@@ -6,9 +6,7 @@ TOKEN_URL="$BASE_URL/users/token/"
 PROJECTS_URL="$BASE_URL/projects/"
 TASKS_URL="$BASE_URL/tasks/"
 
-# -----------------------
-# 1. Création des users
-# -----------------------
+# 1. Create users
 USERS=("toto" "tata" "tutu" "test")
 for USER in "${USERS[@]}"; do
   echo "Création de l'utilisateur: $USER"
@@ -17,9 +15,7 @@ for USER in "${USERS[@]}"; do
     -d "{\"username\": \"$USER\", \"password\": \"$USER\"}" > /dev/null
 done
 
-# -----------------------
-# 2. Récupération tokens
-# -----------------------
+# 2. Retrieve tokens
 declare -A TOKENS
 for USER in "${USERS[@]}"; do
   TOKEN=$(curl -s -X POST "$TOKEN_URL" \
@@ -30,9 +26,7 @@ for USER in "${USERS[@]}"; do
   echo "Token récupéré pour $USER"
 done
 
-# -----------------------
-# 3. Projet de Toto
-# -----------------------
+# 3. Toto's Project
 echo "Création du projet de toto..."
 PROJECT1=$(curl -s -X POST "$PROJECTS_URL" \
   -H "Authorization: Bearer ${TOKENS[toto]}" \
@@ -49,7 +43,7 @@ PROJECT1=$(curl -s -X POST "$PROJECTS_URL" \
 PROJECT1_ID=$(echo $PROJECT1 | jq -r '.id')
 echo "Projet de Toto créé avec ID $PROJECT1_ID"
 
-# Ajout de tâches
+# Add tasks
 echo "Ajout de tâches au projet de Toto..."
 curl -s -X POST "$TASKS_URL" \
   -H "Authorization: Bearer ${TOKENS[toto]}" \
@@ -78,9 +72,7 @@ curl -s -X POST "$TASKS_URL" \
   }" > /dev/null
 
 
-# -----------------------
-# 4. Projet de Tutu
-# -----------------------
+# 4. Tutu's Project
 echo "Création du projet de tutu..."
 PROJECT2=$(curl -s -X POST "$PROJECTS_URL" \
   -H "Authorization: Bearer ${TOKENS[tutu]}" \
@@ -97,7 +89,7 @@ PROJECT2=$(curl -s -X POST "$PROJECTS_URL" \
 PROJECT2_ID=$(echo $PROJECT2 | jq -r '.id')
 echo "Projet de Tutu créé avec ID $PROJECT2_ID"
 
-# Ajout de tâches
+# Add tasks
 echo "Ajout de tâches au projet de Tutu..."
 curl -s -X POST "$TASKS_URL" \
   -H "Authorization: Bearer ${TOKENS[tutu]}" \

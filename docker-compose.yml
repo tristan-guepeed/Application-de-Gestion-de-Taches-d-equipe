@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   web:
-    build: .
+    build: ./project_gestion
     container_name: django_app
     restart: always
     depends_on:
@@ -25,12 +25,19 @@ services:
       DB_HOST: db
       DB_PORT: 5432
     volumes:
-      - .:/app
+      - ./project_gestion:/app
     ports:
       - "8000:8000"
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+    command: sh ./scripts/entrypoint.sh
+
+  front:
+    build: ./front
+    container_name: react_app
+    restart: always
+    depends_on:
+      - web
+    ports:
+      - "3000:80"
 
 volumes:
   postgres_data:
