@@ -85,7 +85,15 @@ export default function Dashboard() {
   };
 
   const filteredProjects = projects.filter((project) => {
-    if (filter === "all") return true;
+      if (filter === "all") {
+      return (
+        project.owner === user?.username ||
+        project.members_info.some((m) =>
+          ["owner", "manager", "member"].includes(m.role) &&
+          m.user === user?.username
+        )
+      );
+    }
     if (filter === "owner")
       return project.owner === user?.username;
     if (filter === "member")

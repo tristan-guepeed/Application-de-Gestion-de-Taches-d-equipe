@@ -28,6 +28,18 @@ export interface TaskCreateData {
 
 export type TaskUpdateData = Partial<TaskCreateData>;
 
+export interface Task {
+  id: number;
+  project: number;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignees_info: User[];
+  due_date: string;
+  created_by: number; // id de la personne qui a créé la tâche
+}
+
 // types/index.d.ts
 
 // Projet
@@ -53,3 +65,4 @@ export interface User {
   id: number;
   username: string;
 }
+
