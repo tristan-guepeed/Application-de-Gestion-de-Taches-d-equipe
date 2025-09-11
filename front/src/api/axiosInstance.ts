@@ -9,9 +9,8 @@ const api = axios.create({
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("accessToken");
-
     if (token) {
-      // Axios >= 1.x a des headers en AxiosHeaders → on utilise set()
+      // Axios >= 1.x : headers en AxiosHeaders
       config.headers.set?.("Authorization", `Bearer ${token}`);
     }
     return config;
@@ -38,15 +37,13 @@ api.interceptors.response.use(
           const newAccess = (res.data as { access: string }).access;
           localStorage.setItem("accessToken", newAccess);
 
-          // mettre à jour le header global
+          // mettre à jour le header global et celui de la requête originale
           api.defaults.headers.common["Authorization"] = `Bearer ${newAccess}`;
-
-          // mettre à jour la requête originale
           originalRequest.headers.set?.("Authorization", `Bearer ${newAccess}`);
 
-          return api(originalRequest); // retry
-        } catch (err) {
-          console.error("Erreur lors du refresh token :", err);
+          return api(originalRequest); // retry la requête originale
+        } catch {
+          // échec du refresh → logout
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           window.location.href = "/login";

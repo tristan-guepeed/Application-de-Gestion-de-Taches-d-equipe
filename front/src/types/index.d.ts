@@ -10,7 +10,6 @@ export interface ProjectCreateData {
   members: ProjectMemberData[];
 }
 
-// Pour update on peut rendre tout optionnel
 export type ProjectUpdateData = Partial<ProjectCreateData>;
 
 // Task
@@ -24,8 +23,33 @@ export interface TaskCreateData {
   status: TaskStatus;
   priority: TaskPriority;
   assignees: number[];
-  due_date: string; // format YYYY-MM-DD
+  due_date: string;
 }
 
-// Update est partiel
 export type TaskUpdateData = Partial<TaskCreateData>;
+
+// types/index.d.ts
+
+// Projet
+export interface ProjectMemberInfo {
+  id: number;        // id du ProjectMember
+  user: string;      // username
+  role: "owner" | "manager" | "member";
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  owner: string;
+  owner_id: number; // id de l'utilisateur propriétaire
+  members_info: ProjectMemberInfo[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Utilisateur
+export interface User {
+  id: number;
+  username: string;
+}
