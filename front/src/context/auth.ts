@@ -1,7 +1,13 @@
 import React from "react";
 
+export type User = {
+  id: number;
+  username: string;
+};
+
 export type AuthContextType = {
   accessToken: string | null;
+  user: User | null; // <- ajouté
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 };

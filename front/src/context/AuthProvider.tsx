@@ -1,29 +1,52 @@
-// src/context/AuthProvider.tsx
 import React from "react";
-import { AuthContext } from "./auth";
+import { AuthContext, type User } from "./auth";
 import api from "../api/axiosInstance";
 
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accessToken, setAccessToken] = React.useState<string | null>(
     localStorage.getItem("accessToken")
   );
+  const [user, setUser] = React.useState<User | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  // Fonction pour charger l'utilisateur connecté
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      if (!accessToken) return;
+      try {
+        const res = await api.get<User>("/users/me/");
+        setUser(res.data);
+      } catch {
+        logout();
+      }
+    };
+
+    fetchUser().finally(() => setLoading(false));
+  }, [accessToken]);
+
 
   const login = async (username: string, password: string) => {
     const res = await api.post("/users/token/", { username, password });
     setAccessToken(res.data.access);
-
     localStorage.setItem("accessToken", res.data.access);
     localStorage.setItem("refreshToken", res.data.refresh);
+
+    // Charger les infos du user après login
+    const userRes = await api.get<User>("/users/me/");
+    setUser(userRes.data);
   };
 
   const logout = () => {
     setAccessToken(null);
+    setUser(null);
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
   };
 
+  if (loading) return <div>Chargement...</div>;
+
   return (
-    <AuthContext.Provider value={{ accessToken, login, logout }}>
+    <AuthContext.Provider value={{ accessToken, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
