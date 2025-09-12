@@ -1,11 +1,10 @@
-import { Box, Text } from "@chakra-ui/react";
+import AuthProvider from "./context/AuthProvider";
+import AppRoutes from "./routes/AppRoutes";
 
-function App() {
+export default function App() {
   return (
-    <Box p={4}>
-      <Text fontSize="xl" color="teal.500">Hello Kanbios!</Text>
-    </Box>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
-
-export default App;
