@@ -104,54 +104,83 @@ Authentification
 
 ## 🗄 Base de données
 
+### Tables et Relations
+
+### 1️⃣ `users`
+| Colonne       | Type                       | Nullable | Description                       |
+|---------------|----------------------------|----------|-----------------------------------|
+| id            | integer                    | ❌       | Clé primaire, auto-increment      |
+| password      | varchar(128)               | ❌       | Mot de passe hashé                |
+| last_login    | timestamp with time zone   | ✅       | Dernière connexion                |
+| is_superuser  | boolean                    | ❌       | Super-utilisateur                 |
+| username      | varchar(150)               | ❌       | Nom d’utilisateur                 |
+| first_name    | varchar(150)               | ❌       | Prénom                             |
+| last_name     | varchar(150)               | ❌       | Nom de famille                     |
+| email         | varchar(254)               | ❌       | Email                               |
+| is_staff      | boolean                    | ❌       | Accès admin                        |
+| is_active     | boolean                    | ❌       | Compte actif                       |
+| date_joined   | timestamp with time zone   | ❌       | Date d’inscription                 |
+
+---
+
+### 2️⃣ `project`
+| Colonne       | Type                       | Nullable | Description                       |
+|---------------|----------------------------|----------|-----------------------------------|
+| id            | bigint                     | ❌       | Clé primaire                      |
+| created_at    | timestamp with time zone   | ❌       | Date de création                  |
+| updated_at    | timestamp with time zone   | ❌       | Date de modification              |
+| name          | varchar(200)               | ❌       | Nom du projet                     |
+| description   | text                       | ❌       | Description                       |
+| owner_id      | integer                    | ❌       | FK → `users.id` (propriétaire)    |
+
+---
+
+### 3️⃣ `project_member`
+| Colonne       | Type                       | Nullable | Description                       |
+|---------------|----------------------------|----------|-----------------------------------|
+| id            | bigint                     | ❌       | Clé primaire                      |
+| role          | varchar(20)                | ❌       | Rôle dans le projet (member/owner)|
+| project_id    | bigint                     | ❌       | FK → `project.id`                 |
+| user_id       | integer                    | ❌       | FK → `users.id`                   |
+
+---
+
+### 4️⃣ `task`
+| Colonne       | Type                       | Nullable | Description                       |
+|---------------|----------------------------|----------|-----------------------------------|
+| id            | bigint                     | ❌       | Clé primaire                      |
+| created_at    | timestamp with time zone   | ❌       | Date de création                  |
+| updated_at    | timestamp with time zone   | ❌       | Date de modification              |
+| title         | varchar(200)               | ❌       | Titre de la tâche                 |
+| description   | text                       | ❌       | Description                       |
+| status        | varchar(20)                | ❌       | Statut (ex: todo, in-progress)   |
+| priority      | varchar(20)                | ❌       | Priorité (ex: low, medium, high) |
+| due_date      | date                       | ✅       | Date limite                        |
+| completed_at  | timestamp with time zone   | ✅       | Date de complétion                 |
+| created_by_id | integer                    | ✅       | FK → `users.id`                   |
+| project_id    | bigint                     | ❌       | FK → `project.id`                 |
+
+---
+
+### 5️⃣ `task_assignees`
+| Colonne       | Type                       | Nullable | Description                       |
+|---------------|----------------------------|----------|-----------------------------------|
+| id            | bigint                     | ❌       | Clé primaire                      |
+| task_id       | bigint                     | ❌       | FK → `task.id`                    |
+| user_id       | integer                    | ❌       | FK → `users.id`                   |
+
+---
+
+## 🔗 Relations principales
+
 ```text
-┌────────────┐          ┌───────────────┐
-│  auth_user │          │    project    │
-│────────────│          │───────────────│
-│ id (PK)    │◄────┐    │ id (PK)       │
-│ username   │     │    │ name          │
-│ email      │     │    │ description   │
-│ password   │     │    │ owner_id (FK) │────┐
-│ is_staff   │     │    │ created_at    │    │
-│ is_active  │     │    │ updated_at    │    │
-└────────────┘     │    └───────────────┘    │
-                   │                         │
-                   │                         │
-                   │                         │
-                   │    ┌───────────────────┐│
-                   │    │ project_member    ││
-                   │    │───────────────────││
-                   │    │ id (PK)           ││
-                   │    │ project_id (FK)───┘│
-                   │    │ user_id (FK)───────┘
-                   │    │ role               │
-                   │    └───────────────────┘
-                   │
-                   │    ┌───────────────┐
-                   │    │     task      │
-                   │    │───────────────│
-                   │    │ id (PK)       │
-                   └───▶│ project_id (FK)│
-                        │ title          │
-                        │ description    │
-                        │ status         │
-                        │ priority       │
-                        │ created_by_id(FK)
-                        │ due_date       │
-                        │ completed_at   │
-                        │ created_at     │
-                        │ updated_at     │
-                        └───────────────┘
-                              │
-                              │ ManyToMany
-                              ▼
-                        ┌───────────────┐
-                        │ task_assignees│
-                        │───────────────│
-                        │ id (PK)       │
-                        │ task_id (FK)  │
-                        │ user_id (FK)  │
-                        └───────────────┘
+users.id ───< project.owner_id
+users.id ───< project_member.user_id
+project.id ───< project_member.project_id
+project.id ───< task.project_id
+users.id ───< task.created_by_id
+task.id ───< task_assignees.task_id
+users.id ───< task_assignees.user_id
 ```
 
 
