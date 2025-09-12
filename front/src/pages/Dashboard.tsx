@@ -1,14 +1,32 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // <-- pour redirection
+import { useNavigate } from "react-router-dom";
 import EditProjectModal from "../components/EditProjectModal";
 import CreateProjectModal from "../components/CreateProjectModal";
 import api from "../api/axiosInstance";
 import { useAuthContext } from "../context/auth";
 import type { Project, User } from "../types";
 
+import {
+  Box,
+  Heading,
+  Button,
+  Select,
+  Text,
+  HStack,
+  Alert,
+  AlertIcon,
+  Spinner,
+  SimpleGrid,
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+} from "@chakra-ui/react";
+
 export default function Dashboard() {
   const { user } = useAuthContext();
-  const navigate = useNavigate(); // <-- hook pour redirection
+  const navigate = useNavigate();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -85,7 +103,7 @@ export default function Dashboard() {
   };
 
   const filteredProjects = projects.filter((project) => {
-      if (filter === "all") {
+    if (filter === "all") {
       return (
         project.owner === user?.username ||
         project.members_info.some((m) =>
@@ -99,66 +117,95 @@ export default function Dashboard() {
     if (filter === "member")
       return project.members_info.some((m) => m.user === user?.username && m.role !== "owner" && m.role !== "manager");
     if (filter === "manager")
-      return project.members_info.some((m) => m.user === user?.username && (m.role === "manager"));
+      return project.members_info.some((m) => m.user === user?.username && m.role === "manager");
     return true;
   });
 
-
   return (
-    <div style={{ maxWidth: 800, margin: "50px auto" }}>
-      <h1>Mes projets</h1>
+    <Box maxW="6xl" mx="auto" px={4} py={8}>
+      <Heading mb={6} color="brand.500" textAlign="center">
+        Mes Projets
+      </Heading>
 
-      <div style={{ marginBottom: 20, display: "flex", gap: 10 }}>
-        <button onClick={() => setCreatingProject(true)}>Créer un projet</button>
-        <select value={filter} onChange={(e) => setFilter(e.target.value as "all" | "owner" | "member" | "manager")}>
+      <HStack justify="space-between" mb={6} flexWrap="wrap" gap={4}>
+        <Button colorScheme="blue" onClick={() => setCreatingProject(true)}>
+          Créer un projet
+        </Button>
+
+        <Select
+          maxW="250px"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as typeof filter)}
+        >
           <option value="all">Tous les projets</option>
           <option value="owner">Chef de projet</option>
-          <option value="member">Membre du projet</option>
-          <option value="manager">Manager du projet</option>
-        </select>
-      </div>
+          <option value="member">Membre</option>
+          <option value="manager">Manager</option>
+        </Select>
+      </HStack>
 
       {errorMessage && (
-        <div style={{ color: "red", marginBottom: 10 }}>{errorMessage}</div>
+        <Alert status="error" mb={4} borderRadius="md">
+          <AlertIcon />
+          {errorMessage}
+        </Alert>
       )}
 
-      {loading && <p>Chargement...</p>}
-
-      {filteredProjects.map((project) => (
-        <div
-          key={project.id}
-          style={{
-            border: "1px solid #ccc",
-            borderRadius: 5,
-            padding: 10,
-            marginBottom: 10,
-            cursor: "pointer",
-          }}
-          onClick={() => navigate(`/projects/${project.id}`)}
-        >
-          <h3>{project.name}</h3>
-          <p>{project.description}</p>
-          <p>
-            Propriétaire : <strong>{project.owner}</strong>
-          </p>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditClick(project);
-            }}
-          >
-            Modifier
-          </button>{" "}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteClick(project);
-            }}
-          >
-            Supprimer
-          </button>
-        </div>
-      ))}
+      {loading ? (
+        <Box textAlign="center" py={10}>
+          <Spinner size="xl" />
+        </Box>
+      ) : (
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+          {filteredProjects.map((project) => (
+            <Card
+              key={project.id}
+              cursor="pointer"
+              borderRadius="xl"
+              boxShadow="sm"
+              _hover={{ boxShadow: "md", transform: "scale(1.02)" }}
+              transition="all 0.2s"
+              onClick={() => navigate(`/projects/${project.id}`)}
+            >
+              <CardHeader>
+                <Heading size="md">{project.name}</Heading>
+              </CardHeader>
+              <CardBody>
+                <Text mb={2}>{project.description}</Text>
+                <Text fontSize="sm" color="gray.600">
+                  Propriétaire : <b>{project.owner}</b>
+                </Text>
+              </CardBody>
+              <CardFooter>
+                <HStack spacing={3}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    colorScheme="blue"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditClick(project);
+                    }}
+                  >
+                    Modifier
+                  </Button>
+                  <Button
+                    size="sm"
+                    colorScheme="red"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(project);
+                    }}
+                  >
+                    Supprimer
+                  </Button>
+                </HStack>
+              </CardFooter>
+            </Card>
+          ))}
+        </SimpleGrid>
+      )}
 
       {editingProject && (
         <EditProjectModal
@@ -177,6 +224,6 @@ export default function Dashboard() {
           onCreate={handleCreateProject}
         />
       )}
-    </div>
+    </Box>
   );
 }
