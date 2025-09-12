@@ -42,7 +42,7 @@ docker compose up -d
 ### Urls
 
 [Backend](http://localhost:8000)
-[Frontend](http://localhost:5173)
+[Frontend](http://localhost:3000)
 
 
 ### 💻 En local
