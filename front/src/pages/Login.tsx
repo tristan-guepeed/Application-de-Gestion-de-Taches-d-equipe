@@ -1,6 +1,20 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAuthContext } from "../context/auth";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Heading,
+  Text,
+  Link,
+  Alert,
+  AlertIcon,
+  VStack,
+  useToast,
+} from "@chakra-ui/react";
 
 export default function Login() {
   const { login } = useAuthContext();
@@ -10,18 +24,27 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [info, setInfo] = useState<string | null>(null); // nouveau
+  const [info, setInfo] = useState<string | null>(null);
+
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setInfo("Connexion en cours, veuillez patienter..."); // message
+    setInfo("Connexion en cours, veuillez patienter...");
 
     try {
       await login(username, password);
-      setInfo("Connexion réussie ! Redirection vers le dashboard...");
-      // redirection après un petit délai pour montrer le message
+      setInfo("Connexion réussie ! Redirection...");
+      toast({
+        title: "Bienvenue !",
+        description: "Vous êtes connecté avec succès",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+
       setTimeout(() => {
         navigate("/projects");
       }, 1000);
@@ -37,49 +60,88 @@ export default function Login() {
       } else {
         setError("Erreur réseau");
       }
-      setInfo(null); // enlever le message en cas d'erreur
+      setInfo(null);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "50px auto", textAlign: "center" }}>
-      <h1>Connexion</h1>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 10 }}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: 10 }}>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
-        {error && <div style={{ color: "red", marginBottom: 10 }}>{error}</div>}
-        {info && <div style={{ color: "green", marginBottom: 10 }}>{info}</div>}
-        <button type="submit" disabled={loading} style={{ padding: "8px 16px" }}>
-          {loading ? "Connexion en cours..." : "Se connecter"}
-        </button>
-      </form>
+    <Box
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      minH="100vh"
+      bg="gray.50"
+      px={4}
+    >
+      <Box
+        bg="white"
+        p={8}
+        borderRadius="xl"
+        boxShadow="lg"
+        maxW="md"
+        w="full"
+      >
+        <Heading textAlign="center" mb={6} color="brand.500">
+          Connexion
+        </Heading>
 
-      <div style={{ marginTop: 15 }}>
-        <span>Pas encore de compte ? </span>
-        <Link to="/register" style={{ color: "blue", textDecoration: "underline" }}>
-          S'inscrire
-        </Link>
-      </div>
-    </div>
+        <form onSubmit={handleSubmit}>
+          <VStack spacing={4} align="stretch">
+            <FormControl isRequired>
+              <FormLabel>Nom d'utilisateur</FormLabel>
+              <Input
+                type="text"
+                placeholder="Entrez votre pseudo"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                variant="filled"
+              />
+            </FormControl>
+
+            <FormControl isRequired>
+              <FormLabel>Mot de passe</FormLabel>
+              <Input
+                type="password"
+                placeholder="********"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                variant="filled"
+              />
+            </FormControl>
+
+            {error && (
+              <Alert status="error" borderRadius="md">
+                <AlertIcon />
+                {error}
+              </Alert>
+            )}
+            {info && (
+              <Alert status="info" borderRadius="md">
+                <AlertIcon />
+                {info}
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              colorScheme="blue"
+              isLoading={loading}
+              loadingText="Connexion en cours..."
+            >
+              Se connecter
+            </Button>
+          </VStack>
+        </form>
+
+        <Text mt={4} textAlign="center">
+          Pas encore de compte ?{" "}
+          <Link as={RouterLink} to="/register" color="brand.500" fontWeight="bold">
+            S'inscrire
+          </Link>
+        </Text>
+      </Box>
+    </Box>
   );
 }
