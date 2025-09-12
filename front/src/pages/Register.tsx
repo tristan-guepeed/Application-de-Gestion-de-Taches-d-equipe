@@ -1,6 +1,20 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import api from "../api/axiosInstance";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Heading,
+  Text,
+  Link,
+  Alert,
+  AlertIcon,
+  VStack,
+  useToast,
+} from "@chakra-ui/react";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -11,6 +25,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const toast = useToast();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -19,16 +35,21 @@ export default function Register() {
 
     try {
       await api.post("/users/register/", { username, password });
-      setSuccess("Compte créé avec succès ! Redirection vers la connexion...");
-      
+      setSuccess("Compte créé avec succès ! Redirection...");
+      toast({
+        title: "Succès",
+        description: "Compte créé avec succès, redirection en cours...",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
       setTimeout(() => {
         navigate("/login");
       }, 2000);
     } catch (err) {
       const error = err as import("axios").AxiosError<{ detail: string }>;
       if (error.response) {
-        const message = error.response.data.detail;
-        setError(message);
+        setError(error.response.data.detail);
       } else {
         setError("Erreur réseau");
       }
@@ -38,42 +59,81 @@ export default function Register() {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "50px auto", textAlign: "center" }}>
-      <h1>Créer un compte</h1>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 10 }}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: 10 }}>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
-        {error && <div style={{ color: "red", marginBottom: 10 }}>{error}</div>}
-        {success && <div style={{ color: "green", marginBottom: 10 }}>{success}</div>}
-        <button type="submit" disabled={loading} style={{ padding: "8px 16px" }}>
-          {loading ? "Création en cours..." : "S'inscrire"}
-        </button>
-      </form>
+    <Box
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      minH="100vh"
+      bg="gray.50"
+      px={4}
+    >
+      <Box
+        bg="white"
+        p={8}
+        borderRadius="xl"
+        boxShadow="lg"
+        maxW="md"
+        w="full"
+      >
+        <Heading textAlign="center" mb={6} color="brand.500">
+          Créer un compte
+        </Heading>
 
-      <div style={{ marginTop: 15 }}>
-        <span>Déjà un compte ? </span>
-        <Link to="/login" style={{ color: "blue", textDecoration: "underline" }}>
-          Se connecter
-        </Link>
-      </div>
-    </div>
+        <form onSubmit={handleSubmit}>
+          <VStack spacing={4} align="stretch">
+            <FormControl isRequired>
+              <FormLabel>Nom d'utilisateur</FormLabel>
+              <Input
+                type="text"
+                placeholder="Entrez votre pseudo"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                variant="filled"
+              />
+            </FormControl>
+
+            <FormControl isRequired>
+              <FormLabel>Mot de passe</FormLabel>
+              <Input
+                type="password"
+                placeholder="********"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                variant="filled"
+              />
+            </FormControl>
+
+            {error && (
+              <Alert status="error" borderRadius="md">
+                <AlertIcon />
+                {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert status="success" borderRadius="md">
+                <AlertIcon />
+                {success}
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              colorScheme="blue"
+              isLoading={loading}
+              loadingText="Création en cours..."
+            >
+              S'inscrire
+            </Button>
+          </VStack>
+        </form>
+
+        <Text mt={4} textAlign="center">
+          Déjà un compte ?{" "}
+          <Link as={RouterLink} to="/login" color="brand.500" fontWeight="bold">
+            Se connecter
+          </Link>
+        </Text>
+      </Box>
+    </Box>
   );
 }
