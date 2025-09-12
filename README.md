@@ -133,6 +133,7 @@ Authentification
 | description   | text                       | ❌       | Description                       |
 | owner_id      | integer                    | ❌       | FK → `users.id` (propriétaire)    |
 
+Relations ManyToMany : via ProjectMember avec users
 ---
 
 ### 3️⃣ `project_member`
@@ -160,6 +161,7 @@ Authentification
 | created_by_id | integer                    | ✅       | FK → `users.id`                   |
 | project_id    | bigint                     | ❌       | FK → `project.id`                 |
 
+Relations ManyToMany : via assignees → users
 ---
 
 ### 5️⃣ `task_assignees`
