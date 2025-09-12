@@ -37,15 +37,13 @@ export interface Task {
   priority: TaskPriority;
   assignees_info: User[];
   due_date: string;
-  created_by: number; // id de la personne qui a créé la tâche
+  created_by: number;
 }
-
-// types/index.d.ts
 
 // Projet
 export interface ProjectMemberInfo {
-  id: number;        // id du ProjectMember
-  user: string;      // username
+  id: number;
+  user: string;
   role: "owner" | "manager" | "member";
 }
 
@@ -54,7 +52,7 @@ export interface Project {
   name: string;
   description: string;
   owner: string;
-  owner_id: number; // id de l'utilisateur propriétaire
+  owner_id: number;
   members_info: ProjectMemberInfo[];
   created_at?: string;
   updated_at?: string;

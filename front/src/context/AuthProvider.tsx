@@ -9,7 +9,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
 
-  // Fonction pour charger l'utilisateur connecté
   React.useEffect(() => {
     const fetchUser = async () => {
       if (!accessToken) return;
@@ -31,7 +30,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     localStorage.setItem("accessToken", res.data.access);
     localStorage.setItem("refreshToken", res.data.refresh);
 
-    // Charger les infos du user après login
     const userRes = await api.get<User>("/users/me/");
     setUser(userRes.data);
   };

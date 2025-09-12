@@ -3,6 +3,19 @@ import Modal from "./Modal";
 import api from "../api/axiosInstance";
 import type { Task, User, TaskPriority } from "../types";
 import type { AxiosError } from "axios";
+import {
+  Box,
+  Button,
+  Flex,
+  FormLabel,
+  Input,
+  Select as ChakraSelect,
+  Textarea,
+  VStack,
+  Heading,
+  useToast,
+} from "@chakra-ui/react";
+import Select from "react-select";
 
 interface EditTaskModalProps {
   task: Task;
@@ -21,7 +34,6 @@ export default function EditTaskModal({
   allUsers,
   onClose,
   onUpdate,
-  onDelete,
 }: EditTaskModalProps) {
   const canEdit = currentUserId === projectOwnerId || currentUserId === task.created_by;
 
@@ -33,11 +45,7 @@ export default function EditTaskModal({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleAssigneeToggle = (userId: number) => {
-    setAssignees(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
-  };
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +63,13 @@ export default function EditTaskModal({
       };
       const res = await api.patch<Task>(`/tasks/${task.id}/`, updatedData);
       onUpdate(res.data);
+      toast({
+        title: "Tâche modifiée",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      onClose();
     } catch (err) {
       const error = err as AxiosError<{ detail?: string }>;
       setErrorMessage(error.response?.data.detail || "Erreur lors de la modification de la tâche");
@@ -63,106 +78,90 @@ export default function EditTaskModal({
     }
   };
 
-  const handleDelete = async () => {
-    if (!canEdit) return;
-    if (!confirm("Voulez-vous vraiment supprimer cette tâche ?")) return;
-
-    try {
-      await api.delete(`/tasks/${task.id}/`);
-      onDelete(task.id);
-      onClose();
-    } catch {
-      setErrorMessage("Impossible de supprimer la tâche");
-    }
-  };
-
   return (
     <Modal onClose={onClose}>
-      <h2>Modifier la tâche</h2>
+      <VStack spacing={4} align="stretch">
+        <Heading size="md">Modifier la tâche</Heading>
 
-      {errorMessage && <div style={{ color: "red", marginBottom: 10 }}>{errorMessage}</div>}
+        {errorMessage && (
+          <Box color="red.500">{errorMessage}</Box>
+        )}
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 10 }}>
-          <input
-            type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Titre"
-            style={{ width: "100%", padding: 8 }}
-            required
-            disabled={!canEdit}
-          />
-        </div>
+        <form onSubmit={handleSubmit}>
+          <VStack spacing={4} align="stretch">
+            <Box>
+              <FormLabel>Titre</FormLabel>
+              <Input
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Titre"
+                isDisabled={!canEdit}
+                required
+              />
+            </Box>
 
-        <div style={{ marginBottom: 10 }}>
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            placeholder="Description"
-            style={{ width: "100%", padding: 8 }}
-            required
-            disabled={!canEdit}
-          />
-        </div>
+            <Box>
+              <FormLabel>Description</FormLabel>
+              <Textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Description"
+                isDisabled={!canEdit}
+                required
+              />
+            </Box>
 
-        <div style={{ marginBottom: 10 }}>
-          <label>Priorité :</label>
-          <select
-            value={priority}
-            onChange={e => setPriority(e.target.value as TaskPriority)}
-            disabled={!canEdit}
-          >
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="CRITICAL">CRITICAL</option>
-          </select>
-        </div>
+            <Box>
+              <FormLabel>Priorité</FormLabel>
+              <ChakraSelect
+                value={priority}
+                onChange={e => setPriority(e.target.value as TaskPriority)}
+                isDisabled={!canEdit}
+              >
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </ChakraSelect>
+            </Box>
 
-        <div style={{ marginBottom: 10 }}>
-          <label>Assignés :</label>
-          <div>
-            {allUsers.map(u => (
-              <label key={u.id} style={{ marginRight: 10 }}>
-                <input
-                  type="checkbox"
-                  checked={assignees.includes(u.id)}
-                  onChange={() => handleAssigneeToggle(u.id)}
-                  disabled={!canEdit}
-                />
-                {u.username}
-              </label>
-            ))}
-          </div>
-        </div>
+            <Box>
+              <FormLabel>Assignés</FormLabel>
+              <Select
+                isMulti
+                options={allUsers.map(u => ({ value: u.id, label: u.username }))}
+                value={allUsers
+                  .filter(u => assignees.includes(u.id))
+                  .map(u => ({ value: u.id, label: u.username }))}
+                onChange={selected => setAssignees(selected.map(s => s.value))}
+                isDisabled={!canEdit}
+                placeholder="Choisir les assignés..."
+              />
+            </Box>
 
-        <div style={{ marginBottom: 10 }}>
-          <label>Date limite :</label>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={e => setDueDate(e.target.value)}
-            disabled={!canEdit}
-          />
-        </div>
+            <Box>
+              <FormLabel>Date limite</FormLabel>
+              <Input
+                type="date"
+                value={dueDate}
+                onChange={e => setDueDate(e.target.value)}
+                isDisabled={!canEdit}
+              />
+            </Box>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          {canEdit && (
-            <button type="button" onClick={handleDelete} disabled={loading}>
-              Supprimer
-            </button>
-          )}
-          <button type="button" onClick={onClose} disabled={loading}>
-            Annuler
-          </button>
-          {canEdit && (
-            <button type="submit" disabled={loading}>
-              {loading ? "Modification..." : "Enregistrer"}
-            </button>
-          )}
-        </div>
-      </form>
+            <Flex justify="flex-end" gap={2}>
+              <Button onClick={onClose} isDisabled={loading}>
+                Annuler
+              </Button>
+              {canEdit && (
+                <Button type="submit" colorScheme="blue" isLoading={loading}>
+                  Enregistrer
+                </Button>
+              )}
+            </Flex>
+          </VStack>
+        </form>
+      </VStack>
     </Modal>
   );
 }

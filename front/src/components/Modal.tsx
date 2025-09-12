@@ -7,7 +7,6 @@ interface ModalProps {
 }
 
 export default function Modal({ children, onClose }: ModalProps) {
-  // Gestion de la touche Échap pour fermer
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -33,7 +32,7 @@ export default function Modal({ children, onClose }: ModalProps) {
       }}
     >
       <div
-        onClick={(e) => e.stopPropagation()} // empêcher la fermeture en cliquant dans le modal
+        onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: "white",
           borderRadius: 8,

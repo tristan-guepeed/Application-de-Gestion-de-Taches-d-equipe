@@ -1,8 +1,23 @@
-// src/components/CreateTaskModal.tsx
 import { useState } from "react";
-import Modal from "./Modal";
 import api from "../api/axiosInstance";
 import type { Task, User, TaskPriority } from "../types";
+import {
+  Box,
+  Button,
+  VStack,
+  Input,
+  Textarea,
+  Select,
+  Text,
+  useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "@chakra-ui/react";
+import SelectReact from "react-select";
 
 interface CreateTaskModalProps {
   projectId: number;
@@ -27,17 +42,12 @@ export default function CreateTaskModal({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleAssigneeToggle = (userId: number) => {
-    setAssignees(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
-  };
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage(null);
-
     try {
       const res = await api.post<Task>("/tasks/", {
         project: projectId,
@@ -48,6 +58,12 @@ export default function CreateTaskModal({
         due_date: dueDate,
       });
       onCreate(res.data);
+      toast({
+        title: "Tâche créée",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
       onClose();
     } catch {
       setErrorMessage("Erreur lors de la création de la tâche");
@@ -57,81 +73,80 @@ export default function CreateTaskModal({
   };
 
   return (
-    <Modal onClose={onClose}>
-      <h2>Créer une tâche</h2>
+    <Modal isOpen={true} onClose={onClose} isCentered size="lg">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Créer une tâche</ModalHeader>
+        <ModalBody>
+          <VStack spacing={4} align="stretch">
+            {errorMessage && <Text color="red.500">{errorMessage}</Text>}
 
-      {errorMessage && <div style={{ color: "red", marginBottom: 10 }}>{errorMessage}</div>}
+            <Input
+              placeholder="Titre"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              isRequired
+            />
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 10 }}>
-          <input
-            type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Titre"
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
+            <Textarea
+              placeholder="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              isRequired
+            />
 
-        <div style={{ marginBottom: 10 }}>
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            placeholder="Description"
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
+            <Box>
+              <Text mb={1}>Priorité :</Text>
+              <Select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as TaskPriority)}
+              >
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </Select>
+            </Box>
 
-        <div style={{ marginBottom: 10 }}>
-          <label>Priorité :</label>
-          <select
-            value={priority}
-            onChange={e => setPriority(e.target.value as TaskPriority)}
-          >
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="CRITICAL">CRITICAL</option>
-          </select>
-        </div>
+            <Box>
+              <Text mb={1}>Assignés :</Text>
+              <SelectReact
+                options={allUsers.map((u) => ({ value: u.id, label: u.username }))}
+                isMulti
+                onChange={(selected) =>
+                  setAssignees(selected.map((s) => s.value))
+                }
+                defaultValue={allUsers
+                  .filter((u) => assignees.includes(u.id))
+                  .map((u) => ({ value: u.id, label: u.username }))}
+              />
+              {assignees.includes(currentUserId) && (
+                <Text fontSize="sm" color="gray.500">
+                  Vous êtes assigné
+                </Text>
+              )}
+            </Box>
 
-        <div style={{ marginBottom: 10 }}>
-          <label>Assignés :</label>
-          <div>
-            {allUsers.map(u => (
-              <label key={u.id} style={{ marginRight: 10 }}>
-                <input
-                  type="checkbox"
-                  checked={assignees.includes(u.id)}
-                  onChange={() => handleAssigneeToggle(u.id)}
-                />
-                {u.username}
-                {u.id === currentUserId ? " (Vous)" : ""}
-              </label>
-            ))}
-          </div>
-        </div>
+            <Box>
+              <Text mb={1}>Date limite :</Text>
+              <Input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </Box>
+          </VStack>
+        </ModalBody>
 
-        <div style={{ marginBottom: 10 }}>
-          <label>Date limite :</label>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={e => setDueDate(e.target.value)}
-          />
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          <button type="button" onClick={onClose} disabled={loading}>
+        <ModalFooter>
+          <Button mr={3} onClick={onClose} isDisabled={loading}>
             Annuler
-          </button>
-          <button type="submit" disabled={loading}>
-            {loading ? "Création..." : "Créer"}
-          </button>
-        </div>
-      </form>
+          </Button>
+          <Button colorScheme="blue" onClick={handleSubmit} isLoading={loading}>
+            Créer
+          </Button>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   );
 }
