@@ -1,8 +1,29 @@
 import { useState } from "react";
-import Modal from "./Modal";
 import api from "../api/axiosInstance";
 import type { Project, User } from "../types";
 import type { AxiosError } from "axios";
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  Button,
+  Input,
+  Textarea,
+  Select,
+  VStack,
+  HStack,
+  Text,
+  Alert,
+  AlertIcon,
+  Box,
+  useToast,
+  FormControl,
+  FormLabel,
+} from "@chakra-ui/react";
 
 type ProjectMember = {
   id: number;
@@ -39,6 +60,7 @@ export default function EditProjectModal({
   const [newOwnerId, setNewOwnerId] = useState<number>(project.owner_id);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const toast = useToast();
 
   const handleRoleChange = (user_id: number, role: ProjectMember["role"]) => {
     setMembers((prev) =>
@@ -72,7 +94,7 @@ export default function EditProjectModal({
 
     try {
       const membersToSend = members
-        .filter((m) => m.role !== "owner") // exclure le owner pour l’update
+        .filter((m) => m.role !== "owner")
         .map((m) => ({
           id: m.user_id,
           role: m.role,
@@ -92,6 +114,13 @@ export default function EditProjectModal({
 
       const updatedProject = await api.get<Project>(`/projects/${project.id}/`);
       onUpdate(updatedProject.data);
+      toast({
+        title: "Projet mis à jour",
+        description: "Les modifications ont été enregistrées.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
       onClose();
     } catch (err) {
       const error = err as AxiosError<{ detail?: string }>;
@@ -111,128 +140,150 @@ export default function EditProjectModal({
     }
   };
 
-  // Membres éditables (sans le owner)
   const editableMembers = members.filter((m) => m.role !== "owner");
 
   return (
-    <Modal onClose={onClose}>
-      <h2>Modifier le projet</h2>
+    <Modal isOpen={true} onClose={onClose} size="lg">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Modifier le projet</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <VStack spacing={4} as="form" onSubmit={handleSubmit}>
+            {errorMessage && (
+              <Alert status="error" borderRadius="md">
+                <AlertIcon />
+                {errorMessage}
+              </Alert>
+            )}
 
-      {errorMessage && (
-        <div style={{ color: "red", marginBottom: 10 }}>{errorMessage}</div>
-      )}
+            <FormControl>
+              <FormLabel>Nom du projet</FormLabel>
+              <Input
+                placeholder="Nom du projet"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </FormControl>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 10 }}>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nom du projet"
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
+            <FormControl>
+              <FormLabel>Description</FormLabel>
+              <Textarea
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </FormControl>
 
-        <div style={{ marginBottom: 10 }}>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description"
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
+            <Box w="full">
+              <Text fontWeight="bold" mb={2}>
+                Membres
+              </Text>
+              <VStack spacing={2} align="stretch">
+                {editableMembers.map((m) => (
+                  <HStack
+                    key={m.user_id}
+                    p={2}
+                    border="1px solid"
+                    borderColor="gray.200"
+                    borderRadius="md"
+                    justify="space-between"
+                  >
+                    <Text>{m.user}</Text>
+                    <HStack>
+                      <Select
+                        size="sm"
+                        value={m.role}
+                        onChange={(e) =>
+                          handleRoleChange(
+                            m.user_id!,
+                            e.target.value as ProjectMember["role"]
+                          )
+                        }
+                      >
+                        <option value="manager">Manager</option>
+                        <option value="member">Membre</option>
+                      </Select>
+                      <Button
+                        size="sm"
+                        colorScheme="red"
+                        onClick={() => handleRemoveMember(m.user_id!)}
+                      >
+                        Supprimer
+                      </Button>
+                    </HStack>
+                  </HStack>
+                ))}
 
-        <div style={{ marginBottom: 10 }}>
-          <h3>Membres</h3>
-          {editableMembers.map((m) => (
-            <div
-              key={m.user_id}
-              style={{
-                display: "flex",
-                gap: 10,
-                alignItems: "center",
-                marginBottom: 5,
-              }}
-            >
-              <span>{m.user}</span>
-              <select
-                value={m.role}
-                onChange={(e) =>
-                  handleRoleChange(m.user_id!, e.target.value as ProjectMember["role"])
-                }
+                <HStack>
+                  <Select id="add-user" placeholder="Choisir un utilisateur">
+                    {allUsers
+                      .filter((u) => !members.some((m) => m.user_id === u.id))
+                      .map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.username}
+                        </option>
+                      ))}
+                  </Select>
+                  <Select id="add-role" defaultValue="member">
+                    <option value="member">Membre</option>
+                    <option value="manager">Manager</option>
+                  </Select>
+                  <Button
+                    onClick={() => {
+                      const userSelect = document.getElementById(
+                        "add-user"
+                      ) as HTMLSelectElement;
+                      const roleSelect = document.getElementById(
+                        "add-role"
+                      ) as HTMLSelectElement;
+                      if (!userSelect.value) return;
+                      handleAddMember(
+                        Number(userSelect.value),
+                        roleSelect.value as ProjectMember["role"]
+                      );
+                      userSelect.value = "";
+                      roleSelect.value = "member";
+                    }}
+                  >
+                    Ajouter
+                  </Button>
+                </HStack>
+              </VStack>
+            </Box>
+
+            <Box w="full">
+              <Text fontWeight="bold" mb={2}>
+                Transférer le propriétaire
+              </Text>
+              <Select
+                value={newOwnerId}
+                onChange={(e) => setNewOwnerId(Number(e.target.value))}
               >
-                <option value="manager">Manager</option>
-                <option value="member">Member</option>
-              </select>
-              <button type="button" onClick={() => handleRemoveMember(m.user_id!)}>
-                X
-              </button>
-            </div>
-          ))}
-
-          <div style={{ marginTop: 5 }}>
-            <select id="add-user">
-              <option value="">Choisir un utilisateur</option>
-              {allUsers
-                .filter((u) => !members.some((m) => m.user_id === u.id))
-                .map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.username}
+                {members.map((m) => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.user}
                   </option>
                 ))}
-            </select>
-            <select id="add-role">
-              <option value="member">Member</option>
-              <option value="manager">Manager</option>
-            </select>
-            <button
-              type="button"
-              onClick={() => {
-                const userSelect = document.getElementById(
-                  "add-user"
-                ) as HTMLSelectElement;
-                const roleSelect = document.getElementById(
-                  "add-role"
-                ) as HTMLSelectElement;
-                if (!userSelect.value) return;
-                handleAddMember(
-                  Number(userSelect.value),
-                  roleSelect.value as ProjectMember["role"]
-                );
-                userSelect.value = "";
-                roleSelect.value = "member";
-              }}
-            >
-              Ajouter
-            </button>
-          </div>
-        </div>
+              </Select>
+            </Box>
+          </VStack>
+        </ModalBody>
 
-        <div style={{ marginBottom: 10 }}>
-          <h3>Transférer propriétaire</h3>
-          <select
-            value={newOwnerId}
-            onChange={(e) => setNewOwnerId(Number(e.target.value))}
-          >
-            {members.map((m) => (
-              <option key={m.user_id} value={m.user_id}>
-                {m.user}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          <button type="button" onClick={onClose} disabled={loading}>
+        <ModalFooter>
+          <Button variant="ghost" onClick={onClose} mr={3}>
             Annuler
-          </button>
-          <button type="submit" disabled={loading}>
-            {loading ? "Modification..." : "Enregistrer"}
-          </button>
-        </div>
-      </form>
+          </Button>
+          <Button
+            colorScheme="blue"
+            onClick={handleSubmit}
+            isLoading={loading}
+            loadingText="Modification..."
+          >
+            Enregistrer
+          </Button>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   );
 }

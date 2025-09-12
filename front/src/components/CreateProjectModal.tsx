@@ -1,9 +1,29 @@
-// src/components/CreateProjectModal.tsx
 import { useState } from "react";
-import Modal from "./Modal";
 import api from "../api/axiosInstance";
 import type { User, Project } from "../types";
 import type { AxiosError } from "axios";
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  Button,
+  Input,
+  Textarea,
+  Select,
+  VStack,
+  HStack,
+  Text,
+  Alert,
+  AlertIcon,
+  Box,
+  FormControl,
+  FormLabel,
+  useToast,
+} from "@chakra-ui/react";
 
 type ProjectMember = {
   id: number;
@@ -16,7 +36,7 @@ interface CreateProjectModalProps {
   onClose: () => void;
   onCreate: (newProject: Project) => void;
   allUsers: User[];
-  currentUserId: number; // id de l'utilisateur connecté
+  currentUserId: number;
 }
 
 export default function CreateProjectModal({
@@ -30,6 +50,7 @@ export default function CreateProjectModal({
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const toast = useToast();
 
   const handleAddMember = (user_id: number, role: ProjectMember["role"]) => {
     const user = allUsers.find((u) => u.id === user_id);
@@ -69,6 +90,13 @@ export default function CreateProjectModal({
       });
 
       onCreate(res.data);
+      toast({
+        title: "Projet créé",
+        description: "Votre projet a été ajouté avec succès.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
       onClose();
     } catch (err) {
       const error = err as AxiosError<{ detail?: string }>;
@@ -83,103 +111,135 @@ export default function CreateProjectModal({
   };
 
   return (
-    <Modal onClose={onClose}>
-      <h2>Créer un projet</h2>
+    <Modal isOpen={true} onClose={onClose} size="lg">
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Créer un projet</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <VStack spacing={4} as="form" onSubmit={handleSubmit}>
+            {errorMessage && (
+              <Alert status="error" borderRadius="md">
+                <AlertIcon />
+                {errorMessage}
+              </Alert>
+            )}
 
-      {errorMessage && (
-        <div style={{ color: "red", marginBottom: 10 }}>{errorMessage}</div>
-      )}
+            <FormControl>
+              <FormLabel>Nom du projet</FormLabel>
+              <Input
+                placeholder="Nom du projet"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </FormControl>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 10 }}>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nom du projet"
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
+            <FormControl>
+              <FormLabel>Description</FormLabel>
+              <Textarea
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </FormControl>
 
-        <div style={{ marginBottom: 10 }}>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description"
-            style={{ width: "100%", padding: 8 }}
-            required
-          />
-        </div>
-
-        <div style={{ marginBottom: 10 }}>
-          <h3>Membres</h3>
-          {members.map((m) => (
-            <div
-              key={m.user_id}
-              style={{
-                display: "flex",
-                gap: 10,
-                alignItems: "center",
-                marginBottom: 5,
-              }}
-            >
-              <span>{m.user}</span>
-              <select
-                value={m.role}
-                onChange={(e) =>
-                  handleRoleChange(m.user_id, e.target.value as ProjectMember["role"])
-                }
-              >
-                <option value="manager">Manager</option>
-                <option value="member">Member</option>
-              </select>
-              <button type="button" onClick={() => handleRemoveMember(m.user_id)}>
-                X
-              </button>
-            </div>
-          ))}
-
-          <div style={{ marginTop: 5 }}>
-            <select id="add-user">
-              <option value="">Choisir un utilisateur</option>
-              {allUsers
-                .filter((u) => u.id !== currentUserId && !members.some((m) => m.user_id === u.id))
-                .map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.username}
-                  </option>
+            <Box w="full">
+              <Text fontWeight="bold" mb={2}>
+                Membres
+              </Text>
+              <VStack spacing={2} align="stretch">
+                {members.map((m) => (
+                  <HStack
+                    key={m.user_id}
+                    p={2}
+                    border="1px solid"
+                    borderColor="gray.200"
+                    borderRadius="md"
+                    justify="space-between"
+                  >
+                    <Text>{m.user}</Text>
+                    <HStack>
+                      <Select
+                        size="sm"
+                        value={m.role}
+                        onChange={(e) =>
+                          handleRoleChange(
+                            m.user_id,
+                            e.target.value as ProjectMember["role"]
+                          )
+                        }
+                      >
+                        <option value="manager">Manager</option>
+                        <option value="member">Membre</option>
+                      </Select>
+                      <Button
+                        size="sm"
+                        colorScheme="red"
+                        onClick={() => handleRemoveMember(m.user_id)}
+                      >
+                        Supprimer
+                      </Button>
+                    </HStack>
+                  </HStack>
                 ))}
-            </select>
-            <select id="add-role">
-              <option value="member">Member</option>
-              <option value="manager">Manager</option>
-            </select>
-            <button
-              type="button"
-              onClick={() => {
-                const userSelect = document.getElementById("add-user") as HTMLSelectElement;
-                const roleSelect = document.getElementById("add-role") as HTMLSelectElement;
-                if (!userSelect.value) return;
-                handleAddMember(Number(userSelect.value), roleSelect.value as ProjectMember["role"]);
-                userSelect.value = "";
-                roleSelect.value = "member";
-              }}
-            >
-              Ajouter
-            </button>
-          </div>
-        </div>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          <button type="button" onClick={onClose} disabled={loading}>
+                <HStack>
+                  <Select id="add-user" placeholder="Choisir un utilisateur">
+                    {allUsers
+                      .filter(
+                        (u) =>
+                          u.id !== currentUserId &&
+                          !members.some((m) => m.user_id === u.id)
+                      )
+                      .map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.username}
+                        </option>
+                      ))}
+                  </Select>
+                  <Select id="add-role" defaultValue="member">
+                    <option value="member">Membre</option>
+                    <option value="manager">Manager</option>
+                  </Select>
+                  <Button
+                    onClick={() => {
+                      const userSelect = document.getElementById(
+                        "add-user"
+                      ) as HTMLSelectElement;
+                      const roleSelect = document.getElementById(
+                        "add-role"
+                      ) as HTMLSelectElement;
+                      if (!userSelect.value) return;
+                      handleAddMember(
+                        Number(userSelect.value),
+                        roleSelect.value as ProjectMember["role"]
+                      );
+                      userSelect.value = "";
+                      roleSelect.value = "member";
+                    }}
+                  >
+                    Ajouter
+                  </Button>
+                </HStack>
+              </VStack>
+            </Box>
+          </VStack>
+        </ModalBody>
+
+        <ModalFooter>
+          <Button variant="ghost" onClick={onClose} mr={3}>
             Annuler
-          </button>
-          <button type="submit" disabled={loading}>
-            {loading ? "Création..." : "Créer"}
-          </button>
-        </div>
-      </form>
+          </Button>
+          <Button
+            colorScheme="blue"
+            onClick={handleSubmit}
+            isLoading={loading}
+            loadingText="Création..."
+          >
+            Créer
+          </Button>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   );
 }
